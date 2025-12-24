@@ -1,3 +1,4 @@
+#![allow(unused)]
 use crate::error::Result;
 use aws_sdk_athena::Client as AthenaClient;
 use std::io;
