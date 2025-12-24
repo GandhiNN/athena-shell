@@ -3,10 +3,10 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum AwsError {
     #[error("Generic Athena SDK error: {0}")]
-    AthenaSdk(#[from] aws_sdk_athena::Error),
+    AthenaSdkGenericError(#[from] aws_sdk_athena::Error),
 
-    #[error("S3 SDK error: {0}")]
-    S3(#[from] aws_sdk_s3::Error),
+    #[error("Generic S3 SDK error: {0}")]
+    S3SdkGenericError(#[from] aws_sdk_s3::Error),
 
     #[error("Query execution failed for ID: {execution_id}")]
     QueryFailed { execution_id: String },
