@@ -10,6 +10,9 @@ pub enum AwsClient {
     S3(S3Client),
 }
 
+pub struct AthenaService(AthenaClient);
+pub struct S3Service(S3Client);
+
 impl AwsClient {
     pub async fn new(
         service: &str,
@@ -27,24 +30,34 @@ impl AwsClient {
     }
 }
 
-pub async fn list_data_catalogs(client: &AthenaClient) -> Result<Vec<String>, AwsError> {
-    let mut catalogs: Vec<String> = Vec::new();
-    let mut resp = client.list_data_catalogs().into_paginator().send();
-    while let Some(stream) = resp.next().await {
-        match stream {
-            Ok(x) => {
-                let summaries = x.data_catalogs_summary();
-                for summary in summaries {
-                    let catalog_name = summary.catalog_name().unwrap_or_default();
-                    catalogs.push(catalog_name.into());
-                }
+impl AthenaService {
+    pub async fn list_data_catalogs(&self) -> Result<Vec<String>, AwsError> {
+        let mut catalogs: Vec<String> = Vec::new();
+        let mut next_token: Option<String> = None;
+
+        loop {
+            let mut request = self.0.list_data_catalogs();
+            if let Some(token) = &next_token {
+                request = request.next_token(token);
             }
-            Err(e) => {
-                println!("{:?}", e);
+
+            let response = request
+                .send()
+                .await
+                .map_err(|e| AwsError::AthenaSdk(e.into()))?;
+
+            for summary in response.data_catalogs_summary() {
+                let catalog_name = summary.catalog_name().unwrap_or_default();
+                catalogs.push(catalog_name.into());
+            }
+
+            next_token = response.next_token().map(|s| s.to_string());
+            if next_token.is_none() {
+                break;
             }
         }
+        Ok(catalogs)
     }
-    Ok(catalogs)
 }
 
 pub async fn list_databases(
