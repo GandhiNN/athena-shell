@@ -2,8 +2,8 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum AwsError {
-    #[error("Athena SDK error: {0}")]
-    AwsSdk(#[from] aws_sdk_athena::Error),
+    #[error("Generic Athena SDK error: {0}")]
+    AthenaSdk(#[from] aws_sdk_athena::Error),
 
     #[error("S3 SDK error: {0}")]
     S3(#[from] aws_sdk_s3::Error),
