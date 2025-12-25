@@ -14,11 +14,25 @@ pub struct Repl {
 impl Repl {
     pub fn new(prompt: String) -> Self {
         Repl {
-            prompt,
+            prompt: String::from("shell> "),
             input_buf: String::new(),
             line_buf: String::new(),
             is_in_multiline: false,
         }
+    }
+
+    pub fn print_header(&self) {
+        println!(
+            r#"
+╔═══════════════════════════════════════╗
+║           ATHENA SHELL                ║
+║     AWS Query Interface v0.1.0        ║
+╚═══════════════════════════════════════╝
+
+AWS Athena Query Interface - v0.1.0
+Type 'exit;' to quit
+        "#
+        )
     }
 
     pub async fn repl_loop(
