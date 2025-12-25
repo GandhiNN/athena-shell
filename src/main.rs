@@ -16,5 +16,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let profile: String = Text::new("AWS profile name to use:").prompt()?;
     println!("{}", profile);
 
+    // Run the REPL
+    let mut repl = repl::Repl::new();
+    repl.repl_loop().await?;
+
     Ok(())
 }
