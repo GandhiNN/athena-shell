@@ -12,7 +12,7 @@ pub struct Repl {
 }
 
 impl Repl {
-    pub fn new(prompt: String) -> Self {
+    pub fn new() -> Self {
         Repl {
             prompt: String::from("shell> "),
             input_buf: String::new(),
@@ -35,12 +35,8 @@ Type 'exit;' to quit
         )
     }
 
-    pub async fn repl_loop(
-        &mut self,
-        client: &AthenaClient,
-        database: &str,
-        athena_output_bucket: &str,
-    ) -> Result<()> {
+    pub async fn repl_loop(&mut self) -> Result<()> {
+        self.print_header();
         // Begin REPL loop
         loop {
             // Read line from stdin and flush immediately to stdout.
