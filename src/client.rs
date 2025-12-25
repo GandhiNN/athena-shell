@@ -44,7 +44,7 @@ impl AthenaService {
             let response = request
                 .send()
                 .await
-                .map_err(|e| AwsError::AthenaSdk(e.into()))?;
+                .map_err(|e| AwsError::AthenaSdkGenericError(e.into()))?;
 
             for summary in response.data_catalogs_summary() {
                 let catalog_name = summary.catalog_name().unwrap_or_default();
