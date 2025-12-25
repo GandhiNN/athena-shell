@@ -14,7 +14,7 @@ pub struct Repl {
 impl Repl {
     pub fn new() -> Self {
         Repl {
-            prompt: String::from("shell> "),
+            prompt: String::from("athena> "),
             input_buf: String::new(),
             line_buf: String::new(),
             is_in_multiline: false,
@@ -67,7 +67,8 @@ Type 'exit;' to quit
                     .line_buf
                     .split_whitespace()
                     .collect::<Vec<&str>>()
-                    .join(" ");
+                    .join(" ")
+                    .replace(" ;", ";");
                 if command == "exit;" {
                     println!("Exiting Athena Shell!");
                     return Ok(());
