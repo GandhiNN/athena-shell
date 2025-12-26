@@ -1,8 +1,11 @@
 #![allow(unused)]
 use crate::error::Result;
 use aws_sdk_athena::Client as AthenaClient;
+use ctrlc;
 use std::io;
 use std::io::Write;
+use std::sync::mpsc;
+use std::thread;
 
 pub struct Repl {
     prompt: String,        // prompt chars
@@ -12,9 +15,9 @@ pub struct Repl {
 }
 
 impl Repl {
-    pub fn new() -> Self {
+    pub fn new(profile: &str) -> Self {
         Repl {
-            prompt: String::from("athena> "),
+            prompt: String::from(profile),
             input_buf: String::new(),
             line_buf: String::new(),
             is_in_multiline: false,
@@ -36,6 +39,7 @@ Type 'exit;' to quit
     }
 
     pub async fn repl_loop(&mut self) -> Result<()> {
+        // Print header when first time entering the shell
         self.print_header();
         // Begin REPL loop
         loop {
