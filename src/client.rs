@@ -1,9 +1,12 @@
 #![allow(unused)]
 use crate::config::build_config;
-use crate::error::ShellError;
+use crate::error::{Result, ShellError};
 
 use aws_sdk_athena::Client as AthenaClient;
+use aws_sdk_athena::types::{QueryExecutionContext, ResultConfiguration};
 use aws_sdk_s3::Client as S3Client;
+
+const RETRY_MAX_ATTEMPTS: i32 = 5;
 
 pub enum AwsClient {
     Athena(AthenaClient),
@@ -19,7 +22,7 @@ impl AwsClient {
         profile: &str,
         timeout: u64,
         no_stall_protection: bool,
-    ) -> Result<Self, ShellError> {
+    ) -> Result<Self> {
         let config = build_config(profile, timeout, no_stall_protection).await?;
 
         match service.to_lowercase().as_str() {
@@ -31,7 +34,7 @@ impl AwsClient {
 }
 
 impl AthenaService {
-    pub async fn list_catalogs(&self) -> Result<Vec<String>, ShellError> {
+    pub async fn list_catalogs(&self) -> Result<Vec<String>> {
         let mut catalogs: Vec<String> = Vec::new();
         let mut next_token: Option<String> = None;
 
@@ -59,7 +62,7 @@ impl AthenaService {
         Ok(catalogs)
     }
 
-    pub async fn list_databases(&self, catalog_name: &str) -> Result<Vec<String>, ShellError> {
+    pub async fn list_databases(&self, catalog_name: &str) -> Result<Vec<String>> {
         let mut databases: Vec<String> = Vec::new();
         let mut response = self
             .0
@@ -68,80 +71,70 @@ impl AthenaService {
             .into_paginator()
             .send();
         while let Some(stream) = response.next().await {
-            match stream {
-                Ok(x) => {
-                    for db in x.database_list() {
-                        let name = db.name();
-                        databases.push(name.into())
-                    }
-                }
-                Err(e) => {
-                    println!("{:#?}", e);
-                }
+            let x = stream.map_err(|e| ShellError::AthenaSdkGenericError(e.into()))?;
+            for db in x.database_list() {
+                let name = db.name();
+                databases.push(name.into());
             }
         }
         Ok(databases)
     }
 
-    // pub async fn invoke_query(
-    //     client: &AthenaClient,
-    //     db_name: &str,
-    //     query: &str,
-    //     output_bucket: &str,
-    // ) -> Result<String, AthenaError> {
-    //     let response = client
-    //         .start_query_execution()
-    //         .query_execution_context(QueryExecutionContext::builder().database(db_name).build())
-    //         .query_string(query)
-    //         .result_configuration(
-    //             ResultConfiguration::builder()
-    //                 .output_location(format!("s3://{output_bucket}/"))
-    //                 .build(),
-    //         )
-    //         .send()
-    //         .await?;
-    //     let query_execution_id = response.query_execution_id().unwrap();
-    //     Ok(query_execution_id.to_string())
-    // }
+    pub async fn invoke_query(
+        &self,
+        db_name: &str,
+        query: &str,
+        output_bucket: &str,
+    ) -> Result<String> {
+        let response = self
+            .0
+            .start_query_execution()
+            .query_execution_context(QueryExecutionContext::builder().database(db_name).build())
+            .query_string(query)
+            .result_configuration(
+                ResultConfiguration::builder()
+                    .output_location(format!("s3://{output_bucket}/"))
+                    .build(),
+            )
+            .send()
+            .await
+            .map_err(|e| ShellError::AthenaSdkGenericError(e.into()))?;
+        let query_execution_id = response.query_execution_id().unwrap();
+        Ok(query_execution_id.to_string())
+    }
 
-    // pub async fn has_query_succeeded(
-    //     client: &AthenaClient,
-    //     execution_id: &str,
-    //     attempt: i32,
-    //     timeout: u64,
-    // ) -> Result<bool> {
-    //     for _ in 0..RETRY_MAX_ATTEMPTS {
-    //         let response = client
-    //             .get_query_execution()
-    //             .send()
-    //             .await
-    //             .context("Failed to get query execution status")?;
-
-    //         let execution = response
-    //             .query_execution()
-    //             .context("Missing query execution data")?;
-
-    //         let state = execution
-    //             .status()
-    //             .and_then(|s| s.state())
-    //             .context("Missing query state")?;
-
-    //         match state.as_str() {
-    //             "SUCCEEDED" => return Ok(true),
-    //             "FAILED" | "CANCELLED" => return Ok(false),
-    //             "RUNNING" | "QUEUED" => {
-    //                 tokio::time::sleep(tokio::time::Duration::from_secs(timeout)).await;
-    //             }
-    //             _ => return Ok(false),
-    //         }
-    //     }
-    //     Ok(false)
-    // }
-
-    pub async fn get_query_results(
+    pub async fn has_query_succeeded(
         &self,
         execution_id: &str,
-    ) -> Result<Vec<Vec<String>>, ShellError> {
+        attempt: i32,
+        timeout: u64,
+    ) -> Result<bool> {
+        for _ in 0..RETRY_MAX_ATTEMPTS {
+            let response = self
+                .0
+                .get_query_execution()
+                .query_execution_id(execution_id)
+                .send()
+                .await
+                .map_err(|e| ShellError::AthenaSdkGenericError(e.into()))?;
+
+            let execution = response.query_execution().unwrap();
+
+            let state = execution.status().and_then(|s| s.state());
+
+            match state.unwrap().as_str() {
+                "SUCCEEDED" => return Ok(true),
+                "FAILED" | "CANCELLED" => return Ok(false),
+                "RUNNING" | "QUEUED" => {
+                    tokio::time::sleep(tokio::time::Duration::from_secs(timeout)).await;
+                }
+                _ => return Ok(false),
+            }
+        }
+        Ok(false)
+    }
+
+    pub async fn get_query_results(&self, execution_id: &str) -> Result<Vec<Vec<String>>> {
         let mut result_sets: Vec<Vec<String>> = Vec::new();
         let mut result = self
             .0
