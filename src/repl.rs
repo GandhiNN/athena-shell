@@ -1,12 +1,7 @@
-#![allow(unused)]
 use crate::error::Result;
-use aws_sdk_athena::Client as AthenaClient;
 use std::io::Write;
-use std::io::{self, BufReader};
-use std::sync::mpsc;
-use std::thread;
+use std::io::{self};
 use tokio::io::{AsyncBufReadExt, AsyncReadExt};
-use tokio::io::{BufReader as TokioBufReader, Stdin};
 
 pub struct Repl {
     prompt: String, // prompt chars
