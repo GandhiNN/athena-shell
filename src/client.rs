@@ -1,6 +1,6 @@
 #![allow(unused)]
 use crate::config::build_config;
-use crate::error::AwsError;
+use crate::error::ShellError;
 
 use aws_sdk_athena::Client as AthenaClient;
 use aws_sdk_s3::Client as S3Client;
@@ -19,19 +19,19 @@ impl AwsClient {
         profile: &str,
         timeout: u64,
         no_stall_protection: bool,
-    ) -> Result<Self, AwsError> {
+    ) -> Result<Self, ShellError> {
         let config = build_config(profile, timeout, no_stall_protection).await?;
 
         match service.to_lowercase().as_str() {
             "athena" => Ok(Self::Athena(AthenaClient::new(&config))),
             "s3" => Ok(Self::S3(S3Client::new(&config))),
-            _ => Err(AwsError::InvalidService(service.to_string())),
+            _ => Err(ShellError::InvalidService(service.to_string())),
         }
     }
 }
 
 impl AthenaService {
-    pub async fn list_data_catalogs(&self) -> Result<Vec<String>, AwsError> {
+    pub async fn list_data_catalogs(&self) -> Result<Vec<String>, ShellError> {
         let mut catalogs: Vec<String> = Vec::new();
         let mut next_token: Option<String> = None;
 
@@ -44,7 +44,7 @@ impl AthenaService {
             let response = request
                 .send()
                 .await
-                .map_err(|e| AwsError::AthenaSdkGenericError(e.into()))?;
+                .map_err(|e| ShellError::AthenaSdkGenericError(e.into()))?;
 
             for summary in response.data_catalogs_summary() {
                 let catalog_name = summary.catalog_name().unwrap_or_default();
@@ -63,7 +63,7 @@ impl AthenaService {
 pub async fn list_databases(
     client: &AthenaClient,
     catalog_name: &str,
-) -> Result<Vec<String>, AwsError> {
+) -> Result<Vec<String>, ShellError> {
     let mut databases: Vec<String> = Vec::new();
     let mut response = client
         .list_databases()
@@ -144,7 +144,7 @@ pub async fn list_databases(
 pub async fn get_query_results(
     client: &AthenaClient,
     execution_id: &str,
-) -> Result<Vec<Vec<String>>, AwsError> {
+) -> Result<Vec<Vec<String>>, ShellError> {
     let mut result_sets: Vec<Vec<String>> = Vec::new();
     let mut result = client
         .get_query_results()
