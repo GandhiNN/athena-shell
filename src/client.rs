@@ -99,7 +99,9 @@ impl AthenaService {
             .send()
             .await
             .map_err(|e| ShellError::AthenaSdkGenericError(e.into()))?;
-        let query_execution_id = response.query_execution_id().unwrap();
+        let query_execution_id = response
+            .query_execution_id()
+            .ok_or_else(|| ShellError::MissingData)?;
         Ok(query_execution_id.to_string())
     }
 
