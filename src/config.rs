@@ -1,4 +1,4 @@
-use crate::error::{AwsError, Result};
+use crate::error::{Result, ShellError};
 use aws_config::{BehaviorVersion, stalled_stream_protection::StalledStreamProtectionConfig};
 use aws_runtime::env_config::file;
 use std::path::PathBuf;
@@ -28,7 +28,7 @@ pub fn get_credentials_path() -> Result<PathBuf> {
         return Ok(PathBuf::from(path));
     }
     // Fallback to home directory
-    let home = directories::BaseDirs::new().ok_or(AwsError::MissingHomeDirectory)?;
+    let home = directories::BaseDirs::new().ok_or(ShellError::MissingHomeDirectory)?;
     let home_dir = home.home_dir();
 
     Ok(home_dir.join(DEFAULT_CREDENTIAL_PATH_PREFIX))
@@ -40,7 +40,7 @@ pub async fn build_config(
     no_stall_protection: bool,
 ) -> Result<aws_types::SdkConfig> {
     if timeout == 0 {
-        return Err(AwsError::InvalidTimeout(timeout));
+        return Err(ShellError::InvalidTimeout(timeout));
     }
     let config_options = ConfigOptions::default();
     let retry_config = aws_smithy_types::retry::RetryConfig::standard()

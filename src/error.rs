@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum AwsError {
+pub enum ShellError {
     #[error("Generic Athena SDK error: {0}")]
     AthenaSdkGenericError(#[from] aws_sdk_athena::Error),
 
@@ -25,6 +25,9 @@ pub enum AwsError {
 
     #[error("Invalid service: {0}")]
     InvalidService(String),
+
+    #[error("Cannot convert from UTF-8: {0}")]
+    FromUtf8ConversionError(#[from] std::string::FromUtf8Error),
 }
 
-pub type Result<T> = std::result::Result<T, AwsError>;
+pub type Result<T> = std::result::Result<T, ShellError>;
