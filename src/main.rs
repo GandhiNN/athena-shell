@@ -17,7 +17,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     println!("{}", profile);
 
     // Run the REPL
-    let mut repl = repl::Repl::new();
+    let mut repl = repl::Repl::new(&profile);
     repl.repl_loop().await?;
 
     Ok(())
