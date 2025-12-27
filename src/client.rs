@@ -50,8 +50,9 @@ impl AthenaService {
                 .map_err(|e| ShellError::AthenaSdkGenericError(e.into()))?;
 
             for summary in response.data_catalogs_summary() {
-                let catalog_name = summary.catalog_name().unwrap_or_default();
-                catalogs.push(catalog_name.into());
+                if let Some(name) = summary.catalog_name() {
+                    catalogs.push(name.into())
+                }
             }
 
             next_token = response.next_token().map(|s| s.to_string());
@@ -120,17 +121,18 @@ impl AthenaService {
                 .await
                 .map_err(|e| ShellError::AthenaSdkGenericError(e.into()))?;
 
-            let execution = response.query_execution().unwrap();
-
-            let state = execution.status().and_then(|s| s.state());
-
-            match state.unwrap().as_str() {
-                "SUCCEEDED" => return Ok(true),
-                "FAILED" | "CANCELLED" => return Ok(false),
-                "RUNNING" | "QUEUED" => {
-                    tokio::time::sleep(tokio::time::Duration::from_secs(timeout)).await;
+            if let Some(id) = response.query_execution() {
+                let state = id.status().and_then(|s| s.state());
+                if let Some(s) = state {
+                    match s.as_str() {
+                        "SUCCEEDED" => return Ok(true),
+                        "FAILED" | "CANCELLED" => return Ok(false),
+                        "RUNNING" | "QUEUED" => {
+                            tokio::time::sleep(tokio::time::Duration::from_secs(timeout)).await;
+                        }
+                        _ => return Ok(false),
+                    }
                 }
-                _ => return Ok(false),
             }
         }
         Ok(false)
@@ -146,22 +148,19 @@ impl AthenaService {
             .send();
 
         while let Some(stream) = result.next().await {
-            match stream {
-                Ok(x) => {
-                    let rs = x.result_set().unwrap();
-                    rs.rows().iter().for_each(|row| {
-                        let mut row_data: Vec<String> = Vec::new();
-                        row.data().iter().for_each(|data| {
-                            if let Some(d) = data.var_char_value() {
-                                row_data.push(d.to_string());
-                            } else {
-                                row_data.push("".to_string());
-                            }
-                        });
-                        result_sets.push(row_data);
+            let x = stream.map_err(|e| ShellError::AthenaSdkGenericError(e.into()))?;
+            if let Some(rs) = x.result_set() {
+                rs.rows().iter().for_each(|row| {
+                    let mut row_data: Vec<String> = Vec::new();
+                    row.data().iter().for_each(|data| {
+                        if let Some(d) = data.var_char_value() {
+                            row_data.push(d.to_string());
+                        } else {
+                            row_data.push("".to_string());
+                        }
                     });
-                }
-                Err(e) => println!("{:?}", e),
+                    result_sets.push(row_data);
+                });
             }
         }
         Ok(result_sets)
