@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+mod athena;
 mod client;
 mod config;
 mod error;
