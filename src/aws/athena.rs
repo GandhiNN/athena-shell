@@ -1,5 +1,5 @@
-use crate::client::AthenaService;
-use crate::error::{Result, ShellError};
+use crate::aws::client::AthenaService;
+use crate::aws::error::{Result, ShellError};
 use aws_sdk_athena::types::{QueryExecutionContext, ResultConfiguration};
 
 const RETRY_MAX_ATTEMPTS: i32 = 5;

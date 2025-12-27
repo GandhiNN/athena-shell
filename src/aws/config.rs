@@ -1,4 +1,4 @@
-use crate::error::{Result, ShellError};
+use crate::aws::error::{Result, ShellError};
 use aws_config::{BehaviorVersion, stalled_stream_protection::StalledStreamProtectionConfig};
 use aws_runtime::env_config::file;
 use std::path::PathBuf;

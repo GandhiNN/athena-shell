@@ -1,5 +1,5 @@
-use crate::config::build_config;
-use crate::error::{Result, ShellError};
+use crate::aws::config::build_config;
+use crate::aws::error::{Result, ShellError};
 
 use aws_sdk_athena::Client as AthenaClient;
 use aws_sdk_s3::Client as S3Client;

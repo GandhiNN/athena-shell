@@ -1,8 +1,4 @@
-#![allow(dead_code)]
-mod athena;
-mod client;
-mod config;
-mod error;
+mod aws;
 mod repl;
 
 use inquire::Text;
@@ -10,7 +6,7 @@ use std::error::Error;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let res = config::get_credentials_path().unwrap();
+    let res = aws::config::get_credentials_path().unwrap();
     println!("{}", res.display());
 
     // Load AWS profile and build Athena client

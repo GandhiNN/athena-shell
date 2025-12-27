@@ -1,4 +1,4 @@
-use crate::error::Result;
+use crate::aws::error::Result;
 use std::io::Write;
 use std::io::{self};
 use tokio::io::{AsyncBufReadExt, AsyncReadExt};
