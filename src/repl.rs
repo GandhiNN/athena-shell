@@ -63,12 +63,15 @@ Type 'exit;' to quit
             }
 
             // Flush the output to ensure the prompt is displayed immediately
-            io::stdout().flush().unwrap();
+            let _ = io::stdout().flush();
+
+            // Spawn a tokio task so we can abort it later in case of SIGINT
+            let read_line_task = self.read_line();
 
             // Wait for either stdin or sigint
             tokio::select! {
-                linebuf = self.read_line() => {
-                    let tmp = linebuf.unwrap();
+                linebuf = read_line_task => {
+                    let tmp = linebuf?;
                     self.input_buf.push(tmp.clone());
                     if tmp.contains(";") {
                         // Command complete, move and process
