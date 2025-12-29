@@ -29,11 +29,11 @@ pub enum ShellError {
     #[error("Cannot convert from UTF-8: {0}")]
     FromUtf8ConversionError(#[from] std::string::FromUtf8Error),
 
-    #[error("Credentials file not found at: {0}")]
+    #[error("Credentials file not found: {0}")]
     AwsDefaultCredentialFileNotFound(String),
 
-    #[error("Credentials file not readable: {0}")]
-    AwsCredentialFileNotReadable(String),
+    #[error("Credentials file not found: {0}")]
+    AwsCredentialFileNotFound(String),
 
     #[error("Profile name not found: {0}")]
     AwsProfileNotFound(String),
