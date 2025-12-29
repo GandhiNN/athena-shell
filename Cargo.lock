@@ -27,6 +27,7 @@ dependencies = [
  "aws-sdk-s3",
  "aws-smithy-types",
  "aws-types",
+ "configparser",
  "directories",
  "inquire",
  "thiserror",
@@ -588,6 +589,12 @@ checksum = "75443c44cd6b379beb8c5b45d85d0773baf31cce901fe7bb252f4eff3008ef7d"
 dependencies = [
  "cc",
 ]
+
+[[package]]
+name = "configparser"
+version = "3.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e57e3272f0190c3f1584272d613719ba5fc7df7f4942fe542e63d949cf3a649b"
 
 [[package]]
 name = "const-oid"
