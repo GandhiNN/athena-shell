@@ -40,6 +40,7 @@ Type 'exit;' to quit
         let mut reader = tokio::io::BufReader::new(tokio::io::stdin());
         let mut buffer = Vec::new();
         let _fut = reader.read_until(b'\n', &mut buffer).await;
+        buffer.pop();
         Ok(String::from_utf8(buffer)?)
     }
 
