@@ -1,7 +1,8 @@
 use crate::aws::error::{Result, ShellError};
 use aws_config::{BehaviorVersion, stalled_stream_protection::StalledStreamProtectionConfig};
 use aws_runtime::env_config::file;
-use std::path::PathBuf;
+use configparser::ini::Ini;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 const DEFAULT_CREDENTIAL_PATH_PREFIX: &str = "./aws/credentials";
@@ -39,9 +40,27 @@ pub async fn build_config(
     timeout: u64,
     no_stall_protection: bool,
 ) -> Result<aws_types::SdkConfig> {
-    if timeout == 0 {
+    // protect against invalid timeout values
+    if timeout <= 0 {
         return Err(ShellError::InvalidTimeout(timeout));
     }
+    // fail early if credential path is invalid
+    let cred_path = get_credentials_path()?;
+    if !cred_path.exists() {
+        return Err(ShellError::AwsCredentialFileNotFound(
+            cred_path.display().to_string(),
+        ));
+    }
+    // fail early if profile is invalid
+    let mut config = Ini::new();
+    let _ = config
+        .load(cred_path)
+        .map_err(|e| ShellError::AwsDefaultCredentialFileNotFound(e.into()));
+    let sections = config.sections();
+    if !sections.contains(&String::from(profile)) {
+        return Err(ShellError::AwsProfileNotFound(profile.into()));
+    }
+    // proceed to create the configuration
     let config_options = ConfigOptions::default();
     let retry_config = aws_smithy_types::retry::RetryConfig::standard()
         .with_initial_backoff(Duration::from_secs(1))
