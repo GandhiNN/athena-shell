@@ -10,7 +10,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
     println!("{}", res.display());
 
     // Load AWS profile and build Athena client
-    let profile: String = Text::new("AWS profile name to use:").prompt()?;
+    let mut profile = String::new();
+    loop {
+        profile = Text::new("AWS profile name to use:").prompt()?;
+        if !profile.is_empty() {
+            break;
+        }
+    }
     println!("{}", profile);
 
     // Run the REPL
