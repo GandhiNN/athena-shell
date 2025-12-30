@@ -65,11 +65,11 @@ Type 'exit;' to quit
             }
         });
 
+        // By default the shell is not in multiline mode
         self.multiline = false;
 
         // Begin REPL loop
         loop {
-            // self.multiline is a state management flag which is true when input buffer is not empty and not terminated with a semicolon.
             // If the buffer is processing multi-line input, change the prompt into "|"
             if self.multiline {
                 print!("| ");
@@ -80,13 +80,14 @@ Type 'exit;' to quit
             // Flush the output to ensure the prompt is displayed immediately
             let _ = std::io::stdout().flush();
 
-            // Wait for either stdin or sigint
+            // Wait for either SIGINT or STDIN
             tokio::select! {
                 _ = signal::ctrl_c() => {
                     if self.multiline {
-                        println!("\n");
                         self.multiline = false;
+                        println!("\n");
                         self.line_buf.clear();
+                        self.input_buf.clear();
                     } else { // Ctrl-C during normal prompt
                         println!("\n(Use Ctrl-D to exit)");
                     }
