@@ -5,18 +5,15 @@ use tokio::signal;
 use tokio::sync::mpsc;
 
 pub struct Repl {
-    prompt: String, // prompt chars
-    line_buf: String,
+    prompt: String,         // prompt chars
     input_buf: Vec<String>, // buffer to accumulate stdin input
-    // holds complete command for processing
-    multiline: bool, // state management of the input
+    multiline: bool,        // state management of the input
 }
 
 impl Repl {
     pub fn new(profile: &str) -> Self {
         Repl {
             prompt: format!("{}> ", profile),
-            line_buf: String::new(),
             input_buf: Vec::new(),
             multiline: false,
         }
@@ -86,46 +83,52 @@ Type 'exit;' to quit
                     if self.multiline {
                         self.multiline = false;
                         println!("\n");
-                        self.line_buf.clear();
                         self.input_buf.clear();
                     } else { // Ctrl-C during normal prompt
                         println!("\n(Use Ctrl-D to exit)");
                     }
                 }
-                Some(line) = rx.recv() => {
-                    if !self.multiline {
-                        if line.trim().is_empty() { // handle case where user just press Enter (empty input)
-                            continue;
-                        }
-                        if line.trim_end().ends_with(';') {
-                            let command = line.trim();
-                            if command.to_lowercase() == "exit;" {
-                                println!("Exiting Athena CLI!");
-                                return Ok(());
+                result = rx.recv() => {
+                    match result {
+                        Some(line) => {
+                            let mut command = String::new();
+                            if !self.multiline {
+                                if line.trim().is_empty() { // handle case where user just press Enter (empty input)
+                                    continue;
+                                }
+                                if line.trim_end().ends_with(';') {
+                                    command = String::from(line.trim());
+                                    if command.to_lowercase() == "exit;" {
+                                        println!("Exiting Athena CLI!");
+                                        return Ok(());
+                                    }
+                                    println!("Input command: {}", command); // placeholder for actual work
+                                } else {
+                                    self.multiline = true;
+                                    self.input_buf.push(line);
+                                }
+                            } else {
+                                self.input_buf.push(line.clone());
+                                if line.trim_end().ends_with(';') {
+                                    command = self
+                                        .input_buf
+                                        .iter()
+                                        .map(|s| s.replace('\n', "").trim().to_string())
+                                        .filter(|s| !s.is_empty())
+                                        .collect::<Vec<String>>()
+                                        .join(" ")
+                                        .replace(" ;", ";");
+
+                                    println!("Multiline command: {}", command);
+                                    self.multiline = false;
+                                    self.input_buf.clear();
+                                }
                             }
-                            println!("Input command: {}", command); // placeholder for actual work
-                        } else {
-                            self.multiline = true;
-                            self.input_buf.push(line);
                         }
-                    } else {
-                        self.line_buf.push_str(&line);
-                        if line.trim_end().ends_with(';') {
-                            let command = self
-                                .input_buf
-                                .iter()
-                                .map(|s| s.replace('\n', "").trim().to_string())
-                                .filter(|s| !s.is_empty())
-                                .collect::<Vec<String>>()
-                                .join(" ")
-                                .replace(" ;", ";");
-                            if command.to_lowercase() == "exit;" {
-                                println!("Exiting Athena CLI!");
-                                return Ok(());
-                            }
-                            println!("Multiline command: {}", command); // placeholder for string join
-                            self.multiline = false;
-                            self.input_buf.clear();
+                        None => {
+                            // Handle EOF (Ctrl-D)
+                            println!("\nExiting Athena CLI!");
+                            return Ok(());
                         }
                     }
                 }
