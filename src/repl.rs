@@ -118,6 +118,17 @@ Type '\q' to exit from shell
                                         }
                                         continue
                                     }
+                                    input if input.starts_with("\\ld ") => {
+                                        let parts: Vec<&str> = line.trim().split_whitespace().collect();
+                                        if parts.len() != 2 {
+                                            println!("Usage: \\ld <catalog_name>");
+                                            continue;
+                                        }
+                                        let catalog_name = parts[1].to_string();
+                                        let meta = MetaCommand::ListDatabases(catalog_name);
+                                        let _ = execute_meta_command(meta, &service).await;
+                                        continue
+                                    }
                                     _ => {
                                         if line.trim_end().ends_with(';') {
                                             let command = String::from(line.trim());
