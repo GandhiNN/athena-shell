@@ -1,4 +1,5 @@
 mod aws;
+mod meta;
 mod repl;
 
 use inquire::Text;

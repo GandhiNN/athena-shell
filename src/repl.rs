@@ -1,4 +1,6 @@
 use crate::aws::error::Result;
+
+use crate::meta::{MetaCommand, execute_meta_command};
 use std::io::Write;
 use tokio::io::AsyncBufReadExt;
 use tokio::signal;
@@ -28,7 +30,7 @@ impl Repl {
 ╚═══════════════════════════════════════╝
 
 AWS Athena Query Interface - v0.1.0
-Type 'exit;' to quit
+Type '\q' to exit from shell
         "#
         )
     }
@@ -95,16 +97,26 @@ Type 'exit;' to quit
                                 if line.trim().is_empty() { // handle case where user just press Enter (empty input)
                                     continue;
                                 }
-                                if line.trim_end().ends_with(';') {
-                                    let command = String::from(line.trim());
-                                    if command.to_lowercase() == "exit;" {
-                                        println!("Exiting Athena CLI!");
+                                match line.trim() {
+                                    "\\h" => {
+                                        let meta = MetaCommand::Help;
+                                        let _ = execute_meta_command(meta);
+                                        continue
+                                    }
+                                    "\\q" => {
+                                        let meta = MetaCommand::Quit;
+                                        let _ = execute_meta_command(meta);
                                         return Ok(());
                                     }
-                                    println!("Input command: {}", command); // placeholder for actual work
-                                } else {
-                                    self.multiline = true;
-                                    self.input_buf.push(line);
+                                    _ => {
+                                        if line.trim_end().ends_with(';') {
+                                            let command = String::from(line.trim());
+                                            println!("Input command: {}", command); // placeholder for actual work
+                                        } else {
+                                            self.multiline = true;
+                                            self.input_buf.push(line);
+                                        }
+                                    }
                                 }
                             } else {
                                 self.input_buf.push(line.clone());
