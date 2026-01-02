@@ -1,10 +1,18 @@
-use crate::aws::client::AthenaService;
+use crate::aws::client::{AthenaService, AwsClient};
+use crate::aws::config::build_config;
 use crate::aws::error::{Result, ShellError};
+use aws_sdk_athena::Client as AthenaClient;
 use aws_sdk_athena::types::{QueryExecutionContext, ResultConfiguration};
 
 const RETRY_MAX_ATTEMPTS: i32 = 5;
 
 impl AthenaService {
+    pub async fn new(profile: &str, timeout: u64, no_stall_protection: bool) -> Result<Self> {
+        let config = build_config(profile, timeout, no_stall_protection).await?;
+        let client = AthenaClient::new(&config);
+        Ok(AthenaService(client))
+    }
+
     pub async fn list_catalogs(&self) -> Result<Vec<String>> {
         let mut catalogs: Vec<String> = Vec::new();
         let mut next_token: Option<String> = None;
@@ -15,10 +23,10 @@ impl AthenaService {
                 request = request.next_token(token);
             }
 
-            let response = request
-                .send()
-                .await
-                .map_err(|e| ShellError::AthenaSdkGenericError(e.into()))?;
+            let response = request.send().await.map_err(|e| {
+                eprintln!("AWS Error Details: {:?}", e);
+                ShellError::AthenaSdkGenericError(e.into())
+            })?;
 
             for summary in response.data_catalogs_summary() {
                 if let Some(name) = summary.catalog_name() {
@@ -43,7 +51,10 @@ impl AthenaService {
             .into_paginator()
             .send();
         while let Some(stream) = response.next().await {
-            let x = stream.map_err(|e| ShellError::AthenaSdkGenericError(e.into()))?;
+            let x = stream.map_err(|e| {
+                eprintln!("AWS Error Details: {:?}", e);
+                ShellError::AthenaSdkGenericError(e.into())
+            })?;
             for db in x.database_list() {
                 let name = db.name();
                 databases.push(name.into());
@@ -70,7 +81,10 @@ impl AthenaService {
             )
             .send()
             .await
-            .map_err(|e| ShellError::AthenaSdkGenericError(e.into()))?;
+            .map_err(|e| {
+                eprintln!("AWS Error Details: {:?}", e);
+                ShellError::AthenaSdkGenericError(e.into())
+            })?;
         let query_execution_id = response
             .query_execution_id()
             .ok_or_else(|| ShellError::MissingData)?;
@@ -85,7 +99,10 @@ impl AthenaService {
                 .query_execution_id(execution_id)
                 .send()
                 .await
-                .map_err(|e| ShellError::AthenaSdkGenericError(e.into()))?;
+                .map_err(|e| {
+                    eprintln!("AWS Error Details: {:?}", e);
+                    ShellError::AthenaSdkGenericError(e.into())
+                })?;
 
             if let Some(id) = response.query_execution() {
                 let state = id.status().and_then(|s| s.state());
@@ -114,7 +131,10 @@ impl AthenaService {
             .send();
 
         while let Some(stream) = result.next().await {
-            let x = stream.map_err(|e| ShellError::AthenaSdkGenericError(e.into()))?;
+            let x = stream.map_err(|e| {
+                eprintln!("AWS Error Details: {:?}", e);
+                ShellError::AthenaSdkGenericError(e.into())
+            })?;
             if let Some(rs) = x.result_set() {
                 rs.rows().iter().for_each(|row| {
                     let mut row_data: Vec<String> = Vec::new();
