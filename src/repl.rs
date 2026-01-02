@@ -1,6 +1,7 @@
+use crate::aws::client::AthenaService;
 use crate::aws::error::Result;
-
 use crate::meta::{MetaCommand, execute_meta_command};
+
 use std::io::Write;
 use tokio::io::AsyncBufReadExt;
 use tokio::signal;
@@ -36,7 +37,7 @@ Type '\q' to exit from shell
         )
     }
 
-    pub async fn repl_loop(&mut self) -> Result<()> {
+    pub async fn repl_loop(&mut self, service: AthenaService) -> Result<()> {
         // Print header when first time entering the shell
         self.print_header();
 
@@ -101,13 +102,21 @@ Type '\q' to exit from shell
                                 match line.trim() {
                                     "\\h" => {
                                         let meta = MetaCommand::Help;
-                                        let _ = execute_meta_command(meta);
+                                        let _ = execute_meta_command(meta, &service).await;
                                         continue
                                     }
                                     "\\q" => {
                                         let meta = MetaCommand::Quit;
-                                        let _ = execute_meta_command(meta);
+                                        let _ = execute_meta_command(meta, &service).await;
                                         return Ok(());
+                                    }
+                                    "\\lc"=> {
+                                        let meta = MetaCommand::ListCatalogs;
+                                        match execute_meta_command(meta, &service).await {
+                                            Ok(_) => println!("Command executed successfully"),
+                                            Err(e) => println!("Error: {}", e)
+                                        }
+                                        continue
                                     }
                                     _ => {
                                         if line.trim_end().ends_with(';') {
