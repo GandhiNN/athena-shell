@@ -1,10 +1,11 @@
-use crate::aws::client::{AthenaService, AwsClient};
 use crate::aws::config::build_config;
 use crate::aws::error::{Result, ShellError};
 use aws_sdk_athena::Client as AthenaClient;
 use aws_sdk_athena::types::{QueryExecutionContext, ResultConfiguration};
 
 const RETRY_MAX_ATTEMPTS: i32 = 5;
+
+pub struct AthenaService(AthenaClient);
 
 impl AthenaService {
     pub async fn new(profile: &str, timeout: u64, no_stall_protection: bool) -> Result<Self> {

@@ -5,7 +5,7 @@ mod repl;
 use inquire::Text;
 use std::error::Error;
 
-use crate::aws::client::AthenaService;
+use crate::aws::athena::AthenaService;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {

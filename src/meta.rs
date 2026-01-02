@@ -1,6 +1,6 @@
 #![allow(unused)]
 
-use crate::aws::client::{AthenaService, AwsClient};
+use crate::aws::athena::AthenaService;
 
 #[derive(Debug, PartialEq)]
 pub enum MetaCommand {

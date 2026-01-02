@@ -1,4 +1,4 @@
-use crate::aws::client::AthenaService;
+use crate::aws::athena::AthenaService;
 use crate::aws::error::Result;
 use crate::meta::{MetaCommand, execute_meta_command};
 
