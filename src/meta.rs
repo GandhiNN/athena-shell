@@ -4,9 +4,10 @@ use crate::aws::athena::AthenaService;
 
 #[derive(Debug, PartialEq)]
 pub enum MetaCommand {
-    Quit,         // "\q"
-    Help,         // "\h"
-    ListCatalogs, // "\lc"
+    Quit,                  // "\q"
+    Help,                  // "\h"
+    ListCatalogs,          // "\lc"
+    ListDatabases(String), // "\ld <catalog_name> - catalog name as parameter"
 }
 
 pub async fn execute_meta_command(
@@ -23,9 +24,10 @@ pub async fn execute_meta_command(
 ╚═══════════════════════════════════════╝
 
 Meta Commands:
-    \h  Show this help message
-    \q  Exit the shell
-    \lc List available catalogs
+    \h                 Show this help message
+    \q                 Exit the shell
+    \lc                List available catalogs
+    \ld <catalog_name> List available databases under catalog
 
 Query Commands:
     End statements with semicolon (;) to execute
@@ -44,6 +46,9 @@ Controls:
             println!("Listing Catalogues");
             let cat = service.list_catalogs().await?;
             println!("{:?}", cat);
+        }
+        MetaCommand::ListDatabases(catalog_name) => {
+            println!("Listing Databases for catalog: {}", catalog_name);
         }
     }
     Ok(())
