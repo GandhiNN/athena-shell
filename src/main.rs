@@ -18,6 +18,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
     };
 
+    println!("\nUsing profile: {} to build SDK config...", profile);
+
     // Run the REPL
     let mut repl = repl::Repl::new(&profile);
     repl.repl_loop().await?;
