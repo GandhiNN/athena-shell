@@ -5,8 +5,8 @@ use aws_sdk_athena::Client as AthenaClient;
 use aws_sdk_s3::Client as S3Client;
 
 pub enum AwsClient {
-    Athena(AthenaClient),
-    S3(S3Client),
+    Athena(AthenaService),
+    S3(S3Service),
 }
 
 pub struct AthenaService(pub AthenaClient);
@@ -22,8 +22,14 @@ impl AwsClient {
         let config = build_config(profile, timeout, no_stall_protection).await?;
 
         match service.to_lowercase().as_str() {
-            "athena" => Ok(Self::Athena(AthenaClient::new(&config))),
-            "s3" => Ok(Self::S3(S3Client::new(&config))),
+            "athena" => {
+                let client = AthenaClient::new(&config);
+                Ok(Self::Athena(AthenaService(client)))
+            }
+            "s3" => {
+                let client = S3Client::new(&config);
+                Ok(Self::S3(S3Service(client)))
+            }
             _ => Err(ShellError::InvalidService(service.to_string())),
         }
     }
