@@ -1,12 +1,18 @@
 #![allow(unused)]
+
+use crate::aws::client::{AthenaService, AwsClient};
+
 #[derive(Debug, PartialEq)]
 pub enum MetaCommand {
-    Quit,          // "\q"
-    Help,          // "\h"
-    ListDatabases, // "\l"
+    Quit,         // "\q"
+    Help,         // "\h"
+    ListCatalogs, // "\lc"
 }
 
-pub fn execute_meta_command(cmd: MetaCommand) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn execute_meta_command(
+    cmd: MetaCommand,
+    service: &AthenaService,
+) -> Result<(), Box<dyn std::error::Error>> {
     match cmd {
         MetaCommand::Help => {
             println!(
@@ -19,7 +25,7 @@ pub fn execute_meta_command(cmd: MetaCommand) -> Result<(), Box<dyn std::error::
 Meta Commands:
     \h  Show this help message
     \q  Exit the shell
-    \l  List available databases
+    \lc List available catalogs
 
 Query Commands:
     End statements with semicolon (;) to execute
@@ -34,8 +40,10 @@ Controls:
         MetaCommand::Quit => {
             println!("Exiting Shell!")
         }
-        MetaCommand::ListDatabases => {
-            println!("Listing Databases")
+        MetaCommand::ListCatalogs => {
+            println!("Listing Catalogues");
+            let cat = service.list_catalogs().await?;
+            println!("{:?}", cat);
         }
     }
     Ok(())
