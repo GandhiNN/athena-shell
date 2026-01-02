@@ -91,13 +91,12 @@ Type 'exit;' to quit
                 result = rx.recv() => {
                     match result {
                         Some(line) => {
-                            let mut command = String::new();
                             if !self.multiline {
                                 if line.trim().is_empty() { // handle case where user just press Enter (empty input)
                                     continue;
                                 }
                                 if line.trim_end().ends_with(';') {
-                                    command = String::from(line.trim());
+                                    let command = String::from(line.trim());
                                     if command.to_lowercase() == "exit;" {
                                         println!("Exiting Athena CLI!");
                                         return Ok(());
@@ -110,7 +109,7 @@ Type 'exit;' to quit
                             } else {
                                 self.input_buf.push(line.clone());
                                 if line.trim_end().ends_with(';') {
-                                    command = self
+                                    let command = self
                                         .input_buf
                                         .iter()
                                         .map(|s| s.replace('\n', "").trim().to_string())
