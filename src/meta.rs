@@ -1,8 +1,9 @@
 #![allow(unused)]
 #[derive(Debug, PartialEq)]
 pub enum MetaCommand {
-    Quit, // "\q"
-    Help, // "\h"
+    Quit,          // "\q"
+    Help,          // "\h"
+    ListDatabases, // "\l"
 }
 
 pub fn execute_meta_command(cmd: MetaCommand) -> Result<(), Box<dyn std::error::Error>> {
@@ -18,6 +19,7 @@ pub fn execute_meta_command(cmd: MetaCommand) -> Result<(), Box<dyn std::error::
 Meta Commands:
     \h  Show this help message
     \q  Exit the shell
+    \l  List available databases
 
 Query Commands:
     End statements with semicolon (;) to execute
@@ -31,6 +33,9 @@ Controls:
         }
         MetaCommand::Quit => {
             println!("Exiting Shell!")
+        }
+        MetaCommand::ListDatabases => {
+            println!("Listing Databases")
         }
     }
     Ok(())
