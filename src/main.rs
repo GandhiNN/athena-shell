@@ -2,6 +2,7 @@ mod aws;
 mod meta;
 mod repl;
 
+use aws::client::AwsClient;
 use inquire::Text;
 use std::error::Error;
 
@@ -19,6 +20,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     };
 
     println!("\nUsing profile: {} to build SDK config...", profile);
+    // Build Athena Client
+    let timeout = 10000;
+    let no_stall_protection = true;
+    let _client = AwsClient::new("athena", profile.as_str(), timeout, no_stall_protection).await?;
 
     // Run the REPL
     let mut repl = repl::Repl::new(&profile);
