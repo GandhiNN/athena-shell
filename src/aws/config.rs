@@ -5,7 +5,7 @@ use configparser::ini::Ini;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-const DEFAULT_CREDENTIAL_PATH_PREFIX: &str = "./aws/credentials";
+const DEFAULT_CREDENTIAL_PATH_PREFIX: &str = ".aws/credentials";
 
 pub struct ConfigOptions {
     pub retry_attempts: u32,
@@ -51,10 +51,11 @@ pub async fn build_config(
             cred_path.display().to_string(),
         ));
     }
+    println!("Loading credential file from: {}", cred_path.display());
     // fail early if profile is invalid
     let mut config = Ini::new();
     let _ = config
-        .load(cred_path)
+        .load(&cred_path)
         .map_err(|e| ShellError::AwsDefaultCredentialFileNotFound(e.into()));
     let sections = config.sections();
     if !sections.contains(&String::from(profile)) {
@@ -94,6 +95,7 @@ pub async fn build_config(
         config_builder =
             config_builder.stalled_stream_protection(StalledStreamProtectionConfig::disabled());
     }
+    println!("Loaded profile: {} from: {}", profile, cred_path.display());
 
     Ok(config_builder.load().await)
 }
