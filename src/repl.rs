@@ -30,6 +30,7 @@ impl Repl {
 ╚═══════════════════════════════════════╝
 
 AWS Athena Query Interface - v0.1.0
+Type '\h' to show help
 Type '\q' to exit from shell
         "#
         )
