@@ -2,9 +2,10 @@ mod aws;
 mod meta;
 mod repl;
 
-use aws::client::AwsClient;
 use inquire::Text;
 use std::error::Error;
+
+use crate::aws::client::AthenaService;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -23,11 +24,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Build Athena Client
     let timeout = 10000;
     let no_stall_protection = true;
-    let _client = AwsClient::new("athena", profile.as_str(), timeout, no_stall_protection).await?;
+    let athena_service = AthenaService::new(profile.as_str(), timeout, no_stall_protection).await?;
 
     // Run the REPL
     let mut repl = repl::Repl::new(&profile);
-    repl.repl_loop().await?;
+    repl.repl_loop(athena_service).await?;
 
     // Force Tokio runtime termination to return immediately to OS shell
     std::process::exit(0);
