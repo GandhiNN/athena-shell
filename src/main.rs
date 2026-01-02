@@ -17,11 +17,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
             break input;
         }
     };
-    println!("{}", profile);
 
     // Run the REPL
     let mut repl = repl::Repl::new(&profile);
     repl.repl_loop().await?;
 
-    Ok(())
+    // Force Tokio runtime termination to return immediately to OS shell
+    std::process::exit(0);
 }
