@@ -24,6 +24,7 @@ dependencies = [
  "aws-config",
  "aws-runtime",
  "aws-sdk-athena",
+ "aws-sdk-glue",
  "aws-sdk-s3",
  "aws-smithy-types",
  "aws-types",
@@ -140,6 +141,28 @@ name = "aws-sdk-athena"
 version = "1.97.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "53398c45e99cefdf93f3b6bcd1bc047f7db98c918c7f79d3d7b71309f47b7e9b"
+dependencies = [
+ "aws-credential-types",
+ "aws-runtime",
+ "aws-smithy-async",
+ "aws-smithy-http",
+ "aws-smithy-json",
+ "aws-smithy-runtime",
+ "aws-smithy-runtime-api",
+ "aws-smithy-types",
+ "aws-types",
+ "bytes",
+ "fastrand",
+ "http 0.2.12",
+ "regex-lite",
+ "tracing",
+]
+
+[[package]]
+name = "aws-sdk-glue"
+version = "1.133.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "46e5b45757688d5c99ef0ab38d064fefcc46ee7923fb6d7b23b035323e300c7d"
 dependencies = [
  "aws-credential-types",
  "aws-runtime",
