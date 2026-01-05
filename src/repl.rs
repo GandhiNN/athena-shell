@@ -14,9 +14,9 @@ pub struct Repl {
 }
 
 impl Repl {
-    pub fn new(profile: &str) -> Self {
+    pub fn new(profile: &str, catalog: &str) -> Self {
         Repl {
-            prompt: format!("{}> ", profile),
+            prompt: format!("{}@{}> ", profile, catalog),
             input_buf: Vec::new(),
             multiline: false,
         }

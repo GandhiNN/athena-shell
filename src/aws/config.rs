@@ -35,6 +35,15 @@ pub fn get_credentials_path() -> Result<PathBuf> {
     Ok(home_dir.join(DEFAULT_CREDENTIAL_PATH_PREFIX))
 }
 
+pub fn get_aws_profile(path: &PathBuf) -> Result<Vec<String>> {
+    let mut config = Ini::new();
+    let _ = config
+        .load(&path)
+        .map_err(|e| ShellError::AwsDefaultCredentialFileNotFound(e.into()))?;
+    let profiles = config.sections();
+    Ok(profiles)
+}
+
 pub async fn build_config(
     profile: &str,
     timeout: u64,
@@ -53,12 +62,8 @@ pub async fn build_config(
     }
     println!("Loading credential file from: {}", cred_path.display());
     // fail early if profile is invalid
-    let mut config = Ini::new();
-    let _ = config
-        .load(&cred_path)
-        .map_err(|e| ShellError::AwsDefaultCredentialFileNotFound(e.into()));
-    let sections = config.sections();
-    if !sections.contains(&String::from(profile)) {
+    let profiles = get_aws_profile(&cred_path)?;
+    if !profiles.contains(&String::from(profile)) {
         return Err(ShellError::AwsProfileNotFound(profile.into()));
     }
     // proceed to create the configuration
@@ -95,7 +100,7 @@ pub async fn build_config(
         config_builder =
             config_builder.stalled_stream_protection(StalledStreamProtectionConfig::disabled());
     }
-    println!("Loaded profile: {} from: {}", profile, cred_path.display());
+    println!("Loaded profile: {} from: {}", profile, &cred_path.display());
 
     Ok(config_builder.load().await)
 }
