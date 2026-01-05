@@ -49,6 +49,8 @@ Controls:
         }
         MetaCommand::ListDatabases(catalog_name) => {
             println!("Listing Databases for catalog: {}", catalog_name);
+            let dbs = service.list_databases(&catalog_name).await?;
+            println!("{:?}", dbs);
         }
     }
     Ok(())
