@@ -8,6 +8,9 @@ pub enum ShellError {
     #[error("Generic S3 SDK error: {0}")]
     S3SdkGenericError(#[from] aws_sdk_s3::Error),
 
+    #[error("Generic Glue SDK error: {0}")]
+    GlueSdkGenericError(#[from] aws_sdk_glue::Error),
+
     #[error("Query execution failed for ID: {execution_id}")]
     QueryFailed { execution_id: String },
 

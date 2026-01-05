@@ -8,8 +8,7 @@ const RETRY_MAX_ATTEMPTS: i32 = 5;
 pub struct AthenaService(AthenaClient);
 
 impl AthenaService {
-    pub async fn new(profile: &str, timeout: u64, no_stall_protection: bool) -> Result<Self> {
-        let config = build_config(profile, timeout, no_stall_protection).await?;
+    pub async fn new(config: &aws_types::SdkConfig) -> Result<Self> {
         let client = AthenaClient::new(&config);
         Ok(AthenaService(client))
     }

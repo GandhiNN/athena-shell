@@ -1,4 +1,3 @@
-use crate::aws::athena::AthenaService;
 use crate::aws::error::Result;
 use crate::meta::{MetaCommand, execute_meta_command};
 
@@ -14,9 +13,9 @@ pub struct Repl {
 }
 
 impl Repl {
-    pub fn new(profile: &str, catalog: &str) -> Self {
+    pub fn new(profile: &str) -> Self {
         Repl {
-            prompt: format!("{}@{}> ", profile, catalog),
+            prompt: format!("{}> ", profile),
             input_buf: Vec::new(),
             multiline: false,
         }
@@ -37,7 +36,7 @@ Type '\q' to exit from shell
         )
     }
 
-    pub async fn repl_loop(&mut self, service: AthenaService) -> Result<()> {
+    pub async fn repl_loop(&mut self, service_config: aws_types::SdkConfig) -> Result<()> {
         // Print header when first time entering the shell
         self.print_header();
 
@@ -102,17 +101,17 @@ Type '\q' to exit from shell
                                 match line.trim() {
                                     "\\h" => {
                                         let meta = MetaCommand::Help;
-                                        let _ = execute_meta_command(meta, &service).await;
+                                        let _ = execute_meta_command(meta, &service_config).await;
                                         continue
                                     }
                                     "\\q" => {
                                         let meta = MetaCommand::Quit;
-                                        let _ = execute_meta_command(meta, &service).await;
+                                        let _ = execute_meta_command(meta, &service_config).await;
                                         return Ok(());
                                     }
                                     "\\lc"=> {
                                         let meta = MetaCommand::ListCatalogs;
-                                        match execute_meta_command(meta, &service).await {
+                                        match execute_meta_command(meta, &service_config).await {
                                             Ok(_) => println!("Command executed successfully"),
                                             Err(e) => println!("Error: {}", e)
                                         }
@@ -126,8 +125,19 @@ Type '\q' to exit from shell
                                         }
                                         let catalog_name = parts[1].to_string();
                                         let meta = MetaCommand::ListDatabases(catalog_name);
-                                        let _ = execute_meta_command(meta, &service).await;
+                                        let _ = execute_meta_command(meta, &service_config).await;
                                         continue
+                                    }
+                                    input if input.starts_with("\\lt ") => {
+                                        let parts: Vec<&str> = line.trim().split_whitespace().collect();
+                                        if parts.len() != 2 {
+                                            println!("Usage:: \\lt <database_name>");
+                                            continue;
+                                        }
+                                        let database_name = parts[1].to_string();
+                                        let meta = MetaCommand::ListTables(database_name);
+                                        let _ = execute_meta_command(meta, &service_config).await;
+                                        continue;
                                     }
                                     _ => {
                                         if line.trim_end().ends_with(';') {
