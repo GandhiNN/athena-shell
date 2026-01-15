@@ -9,11 +9,10 @@ use crate::aws::config::{self, build_config};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let res = aws::config::get_credentials_path().unwrap();
-    println!("{}", res.display());
+    let credential_file_path = aws::config::get_credentials_path()?;
 
     // Load AWS profile and build Service Config
-    let avail_profile = config::get_aws_profile(&res)?;
+    let avail_profile = config::get_aws_profile(&credential_file_path)?;
     let selected_profile = Select::new("AWS profile name to use:", avail_profile).prompt()?;
     let input_timeout = Text::new("Put timeout value:").prompt()?;
 
